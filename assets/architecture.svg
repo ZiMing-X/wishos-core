@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 660" width="1000" height="660" role="img" aria-label="WishOS Protocol v0.1 — roles, artifacts and gates">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#57606a"/>
+    </marker>
+    <style>
+      .t { font-family: ui-sans-serif, -apple-system, Segoe UI, Helvetica, Arial, "Microsoft YaHei", sans-serif; fill: #1f2328; }
+      .h { font-size: 20px; font-weight: 700; }
+      .s { font-size: 13px; fill: #57606a; }
+      .b { font-size: 14px; font-weight: 600; }
+      .m { font-size: 12px; fill: #57606a; }
+      .box { fill: #ffffff; stroke: #d0d7de; stroke-width: 1.5; }
+      .role { fill: #fff8ef; stroke: #e9c78f; stroke-width: 1.5; }
+      .art  { fill: #f0f7ff; stroke: #a8c7fa; stroke-width: 1.5; }
+      .gate { fill: #f2fbf4; stroke: #9fd8b0; stroke-width: 1.5; }
+      .acc  { fill: #b26b00; }
+      .ln { stroke: #57606a; stroke-width: 1.6; fill: none; marker-end: url(#a); }
+      .ln2 { stroke: #57606a; stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; marker-end: url(#a); }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1000" height="660" fill="#fbfcfd"/>
+  <text class="t h" x="30" y="40">WishOS Protocol v0.1 — roles · artifacts · gates</text>
+  <text class="t s" x="30" y="62">framework (PROTOCOL.md) + reference implementation (wishos-core) · experimental · no productivity claims</text>
+
+  <!-- gates band -->
+  <rect class="box" x="30" y="80" width="940" height="58" rx="10"/>
+  <text class="t b" x="46" y="104">Gates</text>
+  <g class="t m">
+    <rect class="gate" x="120" y="92" width="120" height="30" rx="15"/><text x="132" y="112">Tier-0 (4 facts)</text>
+    <rect class="gate" x="248" y="92" width="104" height="30" rx="15"/><text x="260" y="112">acceptance</text>
+    <rect class="gate" x="360" y="92" width="104" height="30" rx="15"/><text x="372" y="112">falsifiable</text>
+    <rect class="gate" x="472" y="92" width="120" height="30" rx="15"/><text x="484" y="112">p/y separation</text>
+    <rect class="gate" x="600" y="92" width="140" height="30" rx="15"/><text x="612" y="112">3× evolution gate</text>
+    <rect class="gate" x="748" y="92" width="180" height="30" rx="15"/><text x="760" y="112">read-only watchdog</text>
+  </g>
+
+  <!-- row A: wish -> ticket -> router -> workers -> deliver -->
+  <g>
+    <rect class="role" x="40" y="172" width="150" height="72" rx="10"/>
+    <text class="t b" x="54" y="198">Wish</text>
+    <text class="t m" x="54" y="218">natural-language wish</text>
+    <text class="t m" x="54" y="236">w-wish</text>
+
+    <rect class="art" x="230" y="172" width="150" height="72" rx="10"/>
+    <text class="t b" x="244" y="198">Ticket (JSON)</text>
+    <text class="t m" x="244" y="218">intent · acceptance</text>
+    <text class="t m" x="244" y="236">budget · risk · context</text>
+
+    <rect class="role" x="420" y="172" width="130" height="72" rx="10"/>
+    <text class="t b" x="434" y="198">Router</text>
+    <text class="t m" x="434" y="218">dispatch only</text>
+    <text class="t m" x="434" y="236">w-router</text>
+
+    <rect class="role" x="590" y="172" width="150" height="72" rx="10"/>
+    <text class="t b" x="604" y="198">Worker × N</text>
+    <text class="t m" x="604" y="218">isolated context</text>
+    <text class="t m" x="604" y="236">3-line return</text>
+
+    <rect class="art" x="780" y="172" width="180" height="72" rx="10"/>
+    <text class="t b" x="794" y="198">Deliverables</text>
+    <text class="t m" x="794" y="218">outputs/&lt;ticket_id&gt;/</text>
+    <text class="t m" x="794" y="236">large results on disk</text>
+  </g>
+
+  <!-- row B: capture -> cards -> recall; calibrate; watchdog; evolve -->
+  <g>
+    <rect class="role" x="230" y="292" width="150" height="72" rx="10"/>
+    <text class="t b" x="244" y="318">Capture</text>
+    <text class="t m" x="244" y="338">conclusion / experience</text>
+    <text class="t m" x="244" y="356">w-capture</text>
+
+    <rect class="art" x="420" y="292" width="130" height="72" rx="10"/>
+    <text class="t b" x="434" y="318">Cards</text>
+    <text class="t m" x="434" y="338">statement · evidence</text>
+    <text class="t m" x="434" y="356">falsifiable · source</text>
+
+    <rect class="role" x="590" y="292" width="150" height="72" rx="10"/>
+    <text class="t b" x="604" y="318">Recall</text>
+    <text class="t m" x="604" y="338">cards → chains → wishes</text>
+    <text class="t m" x="604" y="356">hit logging</text>
+
+    <rect class="role" x="780" y="292" width="180" height="72" rx="10"/>
+    <text class="t b" x="794" y="318">Calibrate</text>
+    <text class="t m" x="794" y="338">p before outcome</text>
+    <text class="t m" x="794" y="356">y from outside → Brier</text>
+  </g>
+
+  <!-- side roles -->
+  <g>
+    <rect class="role" x="40" y="292" width="150" height="72" rx="10"/>
+    <text class="t b" x="54" y="318">Enter</text>
+    <text class="t m" x="54" y="338">graph node jump</text>
+    <text class="t m" x="54" y="356">w-enter</text>
+
+    <rect class="role" x="40" y="392" width="150" height="66" rx="10"/>
+    <text class="t b" x="54" y="416">Watchdog</text>
+    <text class="t m" x="54" y="436">read-only readings</text>
+    <text class="t m" x="54" y="452">w-watchdog</text>
+
+    <rect class="role" x="230" y="392" width="150" height="66" rx="10"/>
+    <text class="t b" x="244" y="416">Evolve</text>
+    <text class="t m" x="244" y="436">same pattern ≥ 3×</text>
+    <text class="t m" x="244" y="452">proposal → human</text>
+  </g>
+
+  <!-- data root -->
+  <rect class="box" x="30" y="486" width="940" height="88" rx="10"/>
+  <text class="t b" x="46" y="510">Data root — &lt;workspace&gt;/wishos/  (the plugin never creates it; skills resolve paths against it)</text>
+  <g class="t m">
+    <rect class="art" x="46" y="522" width="250" height="34" rx="8"/><text x="58" y="544">brain/tickets · cards · calibration</text>
+    <rect class="art" x="306" y="522" width="210" height="34" rx="8"/><text x="318" y="544">brain/recall · nodes · chains</text>
+    <rect class="art" x="526" y="522" width="200" height="34" rx="8"/><text x="538" y="544">brain/attention · focus.json</text>
+    <rect class="art" x="736" y="522" width="214" height="34" rx="8"/><text x="748" y="544">outputs/&lt;ticket_id&gt;/ · _tmp/</text>
+  </g>
+
+  <!-- arrows row A -->
+  <path class="ln" d="M190 208 H228"/>
+  <path class="ln" d="M380 208 H418"/>
+  <path class="ln" d="M550 208 H588"/>
+  <path class="ln" d="M740 208 H778"/>
+  <path class="ln2" d="M870 244 V270 H305 V328"/>
+  <!-- deliver -> capture -->
+  <path class="ln" d="M600 244 V270 H305 V290"/>
+  <!-- cards -> recall -->
+  <path class="ln" d="M550 328 H588"/>
+  <!-- recall -> cards (loop) -->
+  <path class="ln2" d="M665 364 V384 H495 V366"/>
+  <!-- recall -> data root -->
+  <path class="ln2" d="M665 384 V470"/>
+  <!-- wish -> recall (recall step 0) -->
+  <path class="ln2" d="M115 244 V270 H588 V290"/>
+  <!-- calibrate / watchdog read all -->
+  <path class="ln2" d="M795 364 V384 H700 V470"/>
+  <path class="ln2" d="M870 364 V404"/>
+  <!-- watchdog -> data (dashed) -->
+  <path class="ln2" d="M115 364 V470"/>
+
+  <text class="t m" x="30" y="620">Roles are skills (solid) · artifacts are files (blue) · gates apply to every step (green) · dashed = read-only / feedback paths.</text>
+  <text class="t m" x="30" y="640">Install: dsh plugin --profile &lt;profile&gt; add github:ZiMing-X/wishos-core  ·  Protocol: PROTOCOL.md · Schemas: schemas/</text>
+</svg>
