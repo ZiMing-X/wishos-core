@@ -1,6 +1,6 @@
 {
   "name": "wishos-core",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "WishOS Core — wish-driven second-brain agent preset for DeepSeek Harness: persona, four Tier-0 hard facts, an isolated tool surface and eight w-* skills, shipped as one installable DSH bundle. / WishOS 内核：许愿式第二大脑的 DSH 预设插件（persona + Tier-0 + 工具面 + 8 个 w-* 技能，随包分发）。",
   "icon": "icon.svg",
