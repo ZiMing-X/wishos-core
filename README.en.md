@@ -8,6 +8,10 @@
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![protocol](https://img.shields.io/badge/protocol-v0.1-informational)](PROTOCOL.md)
 
+<p align="center"><img src="assets/icon-180.png" width="96" height="96" alt="WishOS Core icon"></p>
+
+![WishOS Protocol v0.1 — roles, artifacts, gates](assets/architecture.svg)
+
 > 🟡 **Status: experimental (influence stage)**. This is a **framework / reference implementation**, not a turnkey product.
 > No productivity-gain claims. [中文](README.md) · Install: `dsh plugin --profile <profile> add github:ZiMing-X/wishos-core`
 
@@ -15,7 +19,7 @@
 
 | Item | Value | Status |
 |:--|:--|:--|
-| Package | **wishos-core 0.3.1** | ✅ published ([repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)) |
+| Package | **wishos-core 0.3.2** | ✅ published ([repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)) |
 | Protocol | **WishOS Protocol v0.1** ([PROTOCOL.md](PROTOCOL.md)) | normative |
 | Host | `engines.dsh`: `>=0.2.1-rc.2 <0.2.2-0 \|\| >=0.2.2-rc.1 <0.3.0-0` | ✅ tested on **dsh 0.2.1-rc.2** (Windows); others untested |
 | Node.js | `>=22.19.0` | host requirement |
