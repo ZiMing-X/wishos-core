@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wishos.dev/schemas/calibration.schema.json",
+  "title": "WishOS Calibration Pair (one line of pairs.jsonl)",
+  "type": "object",
+  "required": ["p", "q", "y"],
+  "properties": {
+    "p": { "type": "number", "minimum": 0, "maximum": 1 },
+    "q": { "type": "string", "minLength": 1 },
+    "y": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "raw_placeholder": { "type": "boolean" },
+    "ts": { "type": "string" },
+    "source": { "type": "string" },
+    "session": { "type": "string" }
+  },
+  "additionalProperties": true
+}

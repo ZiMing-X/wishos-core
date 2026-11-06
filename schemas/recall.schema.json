@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wishos.dev/schemas/recall.schema.json",
+  "title": "WishOS Recall Log Entry (one line of recall/<date>.jsonl)",
+  "type": "object",
+  "required": ["ts", "query", "hits", "via"],
+  "properties": {
+    "ts": { "type": "string" },
+    "query": { "type": "string", "minLength": 1 },
+    "hits": { "type": "array", "items": { "type": "string" } },
+    "via": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

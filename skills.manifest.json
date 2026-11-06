@@ -1,0 +1,55 @@
+{
+ "generatedAt": "2026-11-06T13:56",
+ "source": "8 self-authored w-* skills (wishos-core); frontmatter name/description/version",
+ "note": "清单用于自检工具核对包内技能文件；preset 的技能根由 cordis.patch.yml 的 !!js 探针解析包内 skills/。",
+ "skills": [
+  {
+   "dir": "w-wish",
+   "name": "w-wish",
+   "version": "v0.2.0",
+   "description": "WishOS 愿望入口。编译前先召回同类经验，再把一段自然语言愿望编译成可执行 Ticket（目标/验收/预算/风险/上下文），落 brain/tickets/ 后交给 w-router 派发。触发词：许愿、愿望、我想要、帮我做个、我想要一个、wish。"
+  },
+  {
+   "dir": "w-router",
+   "name": "w-router",
+   "version": "v0.3.0",
+   "description": "WishOS 路由层纪律：派发前三问、按 plan 拆子任务、Worker 交回三行；只派发不执行；只把「需要人」的事上报；沉默优先。触发词：路由、派发、router、谁来干、拆任务。"
+  },
+  {
+   "dir": "w-recall",
+   "name": "w-recall",
+   "version": "v0.2.0",
+   "description": "第二大脑召回。先查本地卡片库（brain/cards + FTS），再沿推理链跳转（卡片→链→愿望→产出）；只读卡片，唯一写是 brain/recall/ 命中记账；不出本机。触发词：找一下、以前、继续上次、查知识库、检索、recall。"
+  },
+  {
+   "dir": "w-capture",
+   "name": "w-capture",
+   "version": "v0.3.0",
+   "description": "把一次愿望的结果写成知识卡：成功写结论卡，失败/踩坑写经验卡（含护栏），入库前做可证伪校验（T0-3）。触发词：记下来、存卡、捕获、沉淀、capture、经验、教训。"
+  },
+  {
+   "dir": "w-calibrate",
+   "name": "w-calibrate",
+   "version": "v0.1.0",
+   "description": "p/y 校准：决策当场声明 p，结局出现后补 y；算 Brier/ECE；硬约束 p/y 物理分离、防自评闭环。触发词：校准、置信度、预测、Brier、calibrate。"
+  },
+  {
+   "dir": "w-watchdog",
+   "name": "w-watchdog",
+   "version": "v0.3.0",
+   "description": "WishOS 每日巡检：去重、标陈旧、召回复用率、挑待校准断言、查回退率与注意力支出、成本读数；只报告不动生产件。触发词：体检、巡检、watchdog、看看系统怎么样、召回率、成本巡检。"
+  },
+  {
+   "dir": "w-evolve",
+   "name": "w-evolve",
+   "version": "v0.1.0",
+   "description": "能力提取：同一模式复用 ≥3 次才允许长出新技能/新工具；产出待批提案。触发词：进化、长能力、新模式、evolve。"
+  },
+  {
+   "dir": "w-enter",
+   "name": "w-enter",
+   "version": "v0.1.0",
+   "description": "节点定位器。把「进入 X」解析为图谱节点并跳转：项目节点 / 事件节点 / 思维链节点（claim·evidence·inference·conclusion）/ 卡片 / Ticket / 产出。设定 focus、注入 1 跳邻居与链位、支持「回去」「看邻居」。触发词：进入、进入项目、跳到、定位、回到、回去、看邻居、enter。"
+  }
+ ]
+}

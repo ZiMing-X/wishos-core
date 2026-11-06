@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wishos.dev/schemas/card.schema.json",
+  "title": "WishOS Card (conclusion or experience)",
+  "oneOf": [
+    {
+      "title": "conclusion card",
+      "type": "object",
+      "required": ["id", "statement", "evidence", "confidence", "falsifiable", "source", "status", "updated"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^c-[A-Za-z0-9._-]+$" },
+        "statement": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "falsifiable": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["draft", "verified", "retired"] },
+        "pattern_key": { "type": "string" },
+        "chain_id": { "type": "string" },
+        "merged_from": { "type": "array", "items": { "type": "string" } },
+        "updated": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    {
+      "title": "experience card",
+      "type": "object",
+      "required": ["id", "type", "statement", "trigger", "action", "guardrail", "outcome", "pattern_key", "evidence", "confidence", "falsifiable", "source", "status", "updated"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^c-[A-Za-z0-9._-]+$" },
+        "type": { "const": "experience" },
+        "statement": { "type": "string", "minLength": 1 },
+        "trigger": { "type": "string", "minLength": 1 },
+        "action": { "type": "string", "minLength": 1 },
+        "guardrail": { "type": "string", "minLength": 1 },
+        "outcome": { "type": "string", "enum": ["success", "failure", "partial"] },
+        "pattern_key": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "falsifiable": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "enum": ["draft", "verified", "retired"] },
+        "updated": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  ]
+}

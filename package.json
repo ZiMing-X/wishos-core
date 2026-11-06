@@ -1,0 +1,59 @@
+{
+  "name": "wishos-core",
+  "version": "0.3.0",
+  "type": "module",
+  "description": "WishOS Core — wish-driven second-brain agent preset for DeepSeek Harness: persona, four Tier-0 hard facts, an isolated tool surface and eight w-* skills, shipped as one installable DSH bundle. / WishOS 内核：许愿式第二大脑的 DSH 预设插件（persona + Tier-0 + 工具面 + 8 个 w-* 技能，随包分发）。",
+  "icon": "icon.svg",
+  "license": "Apache-2.0",
+  "author": "ZiMing-X",
+  "homepage": "https://github.com/ZiMing-X/wishos-core#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZiMing-X/wishos-core.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZiMing-X/wishos-core/issues"
+  },
+  "keywords": [
+    "deepseek",
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "wishos",
+    "agent-preset",
+    "skills",
+    "second-brain"
+  ],
+  "engines": {
+    "node": ">=22.19.0",
+    "dsh": ">=0.2.1-rc.2 <0.2.2-0 || >=0.2.2-rc.1 <0.3.0-0"
+  },
+  "exports": {
+    ".": "./plugin.v3.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./skills.manifest.json": "./skills.manifest.json",
+    "./PROTOCOL.md": "./PROTOCOL.md",
+    "./schemas/*.json": "./schemas/*.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "plugin.v3.js",
+    "cordis.patch.yml",
+    "skills.manifest.json",
+    "skills",
+    "tools",
+    "schemas",
+    "PROTOCOL.md",
+    "locale",
+    "icon.svg",
+    "LICENSE",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
