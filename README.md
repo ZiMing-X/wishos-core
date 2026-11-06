@@ -7,6 +7,10 @@
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![protocol](https://img.shields.io/badge/protocol-v0.1-informational)](PROTOCOL.md)
 
+<p align="center"><img src="assets/icon-180.png" width="96" height="96" alt="WishOS Core icon"></p>
+
+![WishOS Protocol v0.1 — roles, artifacts, gates](assets/architecture.svg)
+
 > 🟡 **状态：experimental（影响力阶段）** · 是**框架/参考实现**，不是开箱即用的产品；**不承诺产出增益**。
 > 中文 | [English](README.en.md) · 安装：`dsh plugin --profile <profile> add github:ZiMing-X/wishos-core`
 
@@ -14,7 +18,7 @@
 
 | 项 | 值 | 实测状态 |
 |:--|:--|:--|
-| **包版本** | **wishos-core 0.3.1** | ✅ 已发布（[repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)） |
+| **包版本** | **wishos-core 0.3.2** | ✅ 已发布（[repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)） |
 | **协议版本** | **WishOS Protocol v0.1**（[PROTOCOL.md](PROTOCOL.md)） | 规范性文件 |
 | **DSH 宿主** | `>=0.2.1-rc.2 <0.2.2-0 \|\| >=0.2.2-rc.1 <0.3.0-0`（`engines.dsh`） | ✅ 实测 **dsh 0.2.1-rc.2**（Windows）；其余版本 ⚠️ 未实测 |
 | Node.js | `>=22.19.0` | 承宿主要求 |
