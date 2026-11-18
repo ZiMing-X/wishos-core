@@ -5,7 +5,7 @@
   L0 静态/骨架层（本件主体）：复用 `_wishos_gate.py`（E1~E7）+ `_v12core_accept.py`（A~F）+
      2026-11-02 耦合指标 + 技能目录成本/数量 + 基线 md5 漂移 + 126 未挂核对。
   L1 运行时目录层（--session / --auto）：从 DSH 会话 jsonl.zstd 里读**生效预设**（事件 agent-preset/selected；header 只记创建默认值）与
-     `<available_skills>` 目录，判据 = 「preset 两根的 22 件一件不缺」+「无旧体系件泄漏」；
+     `<available_skills>` 目录，判据 = 「preset 两根的 21 件一件不缺」+「无旧体系件泄漏」；
      preset 之外的件（宿主插件注册 / 运行时注册）只报告、不判红（不受 includeDefaultRoots 管）。
 
   🔧 v1.1（2026-11-02 · 三处判据缺陷修正；v1.0 原件见 _wishos_verify.py.bak-20261102-1615）：
@@ -37,6 +37,7 @@
   python _wishos_verify.py --update-baseline    # 首次/验收通过后写基线 md5（唯一写盘动作）
   python _wishos_verify.py --session <sessionId>  # L0 + 指定会话的 L1
   python _wishos_verify.py --auto               # L0 + 找最近「生效 preset=wishos」的会话做 L1
+  python _wishos_verify.py --l2                 # L0 + L2 单技能冒烟（P2a 并入；独立入口保留兼容）
   python _wishos_verify.py --json               # 机器可读摘要（stdout）
   python _wishos_verify.py --selftest           # 自证：目录解析/耦合计数/期望集合（不碰真配置）
 
@@ -54,17 +55,14 @@ import sys
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HOME = os.path.expanduser("~")
-DSH_HOME = os.environ.get("DSH_HOME") or os.path.join(HOME, ".dsh")
-DSH_PROFILE = os.environ.get("DSH_PROFILE") or "web"
-WISHOS_ROOT = os.environ.get("WISHOS_ROOT") or os.path.join(os.getcwd(), "wishos")
-DSH = DSH_HOME
+DSH = os.path.join(HOME, ".dsh")
 WISH_ROOT = os.path.join(DSH, ".agent-presets", "wishos")
 WISH_SKILLS = os.path.join(WISH_ROOT, "skills")
 CORE_SKILLS = os.path.join(WISH_ROOT, "v12-core", "skills")
 V12_SKILLS = os.path.join(DSH, ".agent-presets", "v12", "skills")
-PATCH = os.path.join(DSH, "profiles", DSH_PROFILE, "cordis.patch.yml")
+PATCH = os.path.join(DSH, "profiles", "web", "cordis.patch.yml")
 SESSIONS = os.path.join(DSH, "sessions")
-WORK = WISHOS_ROOT
+WORK = os.environ.get("WISHOS_ROOT") or os.path.join(os.getcwd(), "wishos")
 TOOLS = os.path.join(WORK, "tools")
 BASELINE_DIR = os.path.join(WORK, "baseline")
 BASELINE = os.path.join(BASELINE_DIR, "wishos-baseline.json")
@@ -73,21 +71,22 @@ PROJECT = os.environ.get("WISHOS_PROJECT") or os.getcwd()   # 仅供自证取一
 
 W8 = ["w-calibrate", "w-capture", "w-enter", "w-evolve",
       "w-recall", "w-router", "w-watchdog", "w-wish"]
-V14 = ["attention-failure-guard", "criteria-design-standard",
+V13 = ["attention-failure-guard", "criteria-design-standard",
        "declared-value-drift-guard", "doc-plan-protocol", "four-rules-v3",
        "info-analyst", "introspect-guard", "memory-efficiency", "plan",
-       "plan-auditor", "plan-executor", "plan-template", "session-guard",
+       "plan-executor", "plan-template", "session-guard",
        "shutdown-protocol"]
-EXPECT22 = sorted(W8 + V14)
+EXPECT = sorted(W8 + V13)
 KNOWN_V12_ONLY = ["v12-router", "intel-analyst", "brain-daemon",
                   "knowledge-retrieve", "knowledge-capture", "shutdown_protocol"]
 CATALOG_CHAR_BUDGET = 12000
 KNOWN_RESIDUAL_LINES = {  # 2026-11-02 W1-c 裁定保留的 2 处耦合指标残留
-    "four-rules-v3": [832, 1190],
+    # 🔧 2026-11-10 V2b 回流：four-rules-v3 v3.13→v3.19 正文 + 退役注 3 行 ⇒ 行号 832/1190 → 835/1193（实测重定位）
+    "four-rules-v3": [835, 1193],
 }
 COUPLING_PATS = [
     ("P1", re.compile(r"[A-Za-z]:\\Users\\64908\\\.workbuddy", re.I)),
-("P2", re.compile(os.environ.get("WISHOS_EXTRA_COUPLING_RE") or r"zzz_no_match_zzz")),
+    ("P2", re.compile(r"E:\\知识库相关")),
     ("P3", re.compile(r"~[/\\]\.workbuddy", re.I)),
 ]
 
@@ -147,12 +146,14 @@ def run_py(script, timeout=180):
 
 
 # ── L0 ────────────────────────────────────────────────────────────────
-def check_l0():
+def check_l0(include_l2=False):
     fails, warns, rows = [], [], []
 
-    # 1) 既有两件门禁（不重复造判据）
+    # 1) 既有门禁（不重复造判据）
+    # 🔧 2026-11-10 P2a：_v12core_sync.py 常驻（6 件构建产物漂移）；此前它无长期消费方
     for name, script in (("_wishos_gate.py", os.path.join(TOOLS, "_wishos_gate.py")),
-                         ("_v12core_accept.py", os.path.join(TOOLS, "_v12core_accept.py"))):
+                         ("_v12core_accept.py", os.path.join(TOOLS, "_v12core_accept.py")),
+                         ("_v12core_sync.py", os.path.join(TOOLS, "_v12core_sync.py"))):
         if not os.path.isfile(script):
             fails.append(("GATE", "缺件: " + script))
             continue
@@ -162,16 +163,30 @@ def check_l0():
         if not ok:
             fails.append(("GATE", "%s rc=%d（输出尾部: %s）" % (name, rc, out.strip().splitlines()[-1:] or "")))
 
-    # 2) 技能目录: 22 = 8 + 14
+    # 2) L2 单技能冒烟（P2a 并入：--l2；独立入口 _wishos_l2_smoke.py 保留兼容）
+    if include_l2:
+        l2 = os.path.join(TOOLS, "_wishos_l2_smoke.py")
+        if not os.path.isfile(l2):
+            fails.append(("L2", "缺件: " + l2))
+        else:
+            rc, out = run_py(l2)
+            rows.append(("l2", "_wishos_l2_smoke.py rc=%d" % rc))
+            if rc != 0:
+                fails.append(("L2", "_wishos_l2_smoke rc=%d（尾部: %s）"
+                              % (rc, (out.strip().splitlines() or ["<无输出>"])[-1])))
+            else:
+                warns.append(("L2", "L2 冒烟通过（含预存警告，详见独立报告）"))
+
+    # 3) 技能目录: 21 = 8 + 13
     files = skill_files()
     tags = {"w": [d for t, d, _ in files if t == "w"], "c": [d for t, d, _ in files if t == "c"]}
     if sorted(tags["w"]) != sorted(W8):
         fails.append(("E", "w-* 目录不符: %r" % sorted(tags["w"])))
-    if sorted(tags["c"]) != sorted(V14):
+    if sorted(tags["c"]) != sorted(V13):
         fails.append(("E", "v12-core 不符: %r" % sorted(tags["c"])))
-    if len(files) != 22:
-        fails.append(("E", "可加载技能数=%d（应 22）" % len(files)))
-    rows.append(("E", "可加载技能 = %d（8 + 14）" % len(files)))
+    if len(files) != 21:
+        fails.append(("E", "可加载技能数=%d（应 21）" % len(files)))
+    rows.append(("E", "可加载技能 = %d（8 + 13）" % len(files)))
 
     # 3) 目录成本（每轮注入成本）
     total = 0
@@ -180,7 +195,7 @@ def check_l0():
         n, fm = frontmatter_len(read(p))
         total += n
         per.append((d, n, len(str(fm.get("description", "")))))
-    rows.append(("COST", "22 件目录 ≈%d 字符 ≈%d tok/轮（预算 %d）"
+    rows.append(("COST", "21 件目录 ≈%d 字符 ≈%d tok/轮（预算 %d）"
                  % (total, total // 2, CATALOG_CHAR_BUDGET)))
     if total > CATALOG_CHAR_BUDGET:
         fails.append(("COST", "目录成本 %d 字符 > 预算 %d（先看 description 最长的件）"
@@ -199,13 +214,13 @@ def check_l0():
     if len(hits) != 2 or known != 2:
         fails.append(("PATHS", "耦合命中 %d 处（应恰 2 处已知保留行）: %r"
                       % (len(hits), [(d, i) for d, i, _ in hits[:8]])))
-    rows.append(("PATHS", "WorkBuddy/正本耦合 = %d 处（余 2 处为 L832 声明 + L1190 历史行）" % len(hits)))
+    rows.append(("PATHS", "WorkBuddy/正本耦合 = %d 处（余 2 处为 L835 声明 + L1193 历史行）" % len(hits)))
 
     # 5) 预设与旧体系未动
     n12 = len([d for d in os.listdir(V12_SKILLS) if os.path.isdir(os.path.join(V12_SKILLS, d))]) \
         if os.path.isdir(V12_SKILLS) else -1
-    if n12 != 56:
-        fails.append(("V12", "v12 预设技能数=%d（应 56）" % n12))
+    if n12 != 42:
+        fails.append(("V12", "v12 预设技能数=%d（应 42；V3a 后基线）" % n12))
     rows.append(("V12", "v12 预设技能数 = %d（未动）" % n12))
     ptxt = read(PATCH) if os.path.isfile(PATCH) else ""
     if "v12-package-20261102" in ptxt:
@@ -230,7 +245,7 @@ def check_l0():
         if drift:
             warns.append(("BASE", "技能文件相对基线有改动（需重新验收并刷基线）: %r" % drift))
         else:
-            rows.append(("BASE", "22 件技能 md5 与基线一致（baseline: %s）" % os.path.basename(BASELINE)))
+            rows.append(("BASE", "21 件技能 md5 与基线一致（baseline: %s）" % os.path.basename(BASELINE)))
     else:
         warns.append(("BASE", "尚无基线（首次验收通过后跑 --update-baseline）"))
 
@@ -357,29 +372,29 @@ def legacy_names(cwd=None):
     2026-11-02 复核实测：v1.1 写死的 6 名漏了 `autonomous-flywheel` / `class-brain-coordinator`
     （这两件在真实会话目录里确有），而写死的 `v12-router` / `shutdown_protocol` 在真实目录里
     从未出现 ⇒ 黑名单窄了直接漏判（假绿）。改为扫目录：v12 预设根 + 用户根 + 该会话 cwd 的
-    工作区根，减去本预设 22 件。插件 / 运行时注册件不在这些目录里，不会被误判为旧件。
+    工作区根，减去本预设 21 件。插件 / 运行时注册件不在这些目录里，不会被误判为旧件。
     """
     names = set(KNOWN_V12_ONLY)   # 兜底补名（目录不可读时仍能判）
     for root in (V12_SKILLS, os.path.join(DSH, "skills")):
         names |= _dir_names(root)
     if cwd:
         names |= _dir_names(os.path.join(cwd, ".dsh", "skills"))
-    return sorted(names - set(EXPECT22))
+    return sorted(names - set(EXPECT))
 
 
 def catalog_judge(cat, legacy=None):
-    """L1 判据（可证伪）：preset 两根的 22 件**一件不缺** + **无旧体系件** ⇒ 通过。
+    """L1 判据（可证伪）：preset 两根的 21 件**一件不缺** + **无旧体系件** ⇒ 通过。
 
-    为什么不是「恰好 22 相等」：运行时目录 = preset 两根 22 + 宿主插件注册件
+    为什么不是「恰好 21 相等」：运行时目录 = preset 两根 21 + 宿主插件注册件
     （remotion-* / diagnose-windows-sandbox-acl）+ 运行时注册件（p0-probe-runtime），
     后两类不受 `includeDefaultRoots:false` 管（该选项只作用于文件系统根）⇒ 等值必假红。
     返回 (fails, missing, leaked, extras)。
     """
     fails, got = [], set(cat)
     legacy = set(legacy) if legacy is not None else set(legacy_names())
-    missing = sorted(set(EXPECT22) - got)
+    missing = sorted(set(EXPECT) - got)
     leaked = sorted(n for n in got if n in legacy)
-    extras = sorted(got - set(EXPECT22) - set(leaked))
+    extras = sorted(got - set(EXPECT) - set(leaked))
     if missing:
         fails.append(("L1", "preset 技能缺失 %d 件: %r" % (len(missing), missing[:10])))
     if leaked:
@@ -447,11 +462,11 @@ def check_l1_session(path, expect_preset="wishos"):
         return fails, warns, rows
     legacy = legacy_names(header.get("cwd"))
     jfails, missing, leaked, extras = catalog_judge(cat, legacy)
-    rows.append(("L1", "目录可见 %d 件 = preset %d（8 w-* + 14 v12-core）+ 非 preset 根 %s"
-                 % (len(cat), len(set(cat) & set(EXPECT22)), extras_brief(extras))))
+    rows.append(("L1", "目录可见 %d 件 = preset %d（%d w-* + %d v12-core）+ 非 preset 根 %s"
+                 % (len(cat), len(set(cat) & set(EXPECT)), len(W8), len(V13), extras_brief(extras))))
     fails += jfails
     if not jfails:
-        rows.append(("L1", "✅ preset 两根 22 件全在 · 旧体系 0 泄漏（旧件全集按目录扫，%d 名）"
+        rows.append(("L1", "✅ preset 两根 21 件全在 · 旧体系 0 泄漏（旧件全集按目录扫，%d 名）"
                      % len(legacy)))
     return fails, warns, rows
 
@@ -501,20 +516,19 @@ def selftest():
 
     # ① 取块：真目录块在前、正文引用标记在后（v1.0 的 rfind 会取到引用文本 → 0 件）
     real = ("<available_skills>\\n"
-            + "\\n".join("- `%s`: desc" % n for n in EXPECT22)
+            + "\\n".join("- `%s`: desc" % n for n in EXPECT)
             + "\\n</available_skills>")
     tail = "读文档时引用了标记：<available_skills>\\n- `w-wish`: 示例\\n"   # 无闭合标签
     got = parse_catalog(real + "\n中间正文\n" + tail)
-    bad += chk(got == sorted(EXPECT22), "① 取块：跳过引用、取真目录块（转义换行，22 件）")
+    bad += chk(got == sorted(EXPECT), "① 取块：跳过引用、取真目录块（转义换行，21 件）")
 
     # ② 耦合计数：3 条合成行 → 恰 3 命中
-    sample = ("x ~/.workbuddy/y\n<legacy-root>/z\nC:\\Users\\<user>\\.workbuddy\\q\n")
-    _extra = re.compile(r"<legacy-root>")
-    n = sum(len(pat.findall(sample)) for _, pat in COUPLING_PATS) + len(_extra.findall(sample))
+    sample = ("x ~/.workbuddy/y\nE:\\知识库相关\\z\nC:\\Users\\64908\\.workbuddy\\q\n")
+    n = sum(len(pat.findall(sample)) for _, pat in COUPLING_PATS)
     bad += chk(n == 3, "② 耦合计数（合成 3 处）实得 %d" % n)
 
-    # ③ 期望集合：22 且无重名
-    bad += chk(len(set(EXPECT22)) == 22, "③ 期望集合 22 件无重名")
+    # ③ 期望集合：21 且无重名
+    bad += chk(len(set(EXPECT)) == 21, "③ 期望集合 21 件无重名")
 
     # ④ 预设锚：header=standard + 事件=wishos ⇒ 必须认成 wishos（来源 event）；无事件回退 header
     fake = ('{"type":"session","agentPreset":"standard"}\n'
@@ -525,31 +539,31 @@ def selftest():
     p2, s2 = session_preset(hdr, fake.splitlines()[0] + "\n")
     bad += chk(p2 == "standard" and s2 == "header", "④b 无事件时回退 header（%r/%s）" % (p2, s2))
 
-    # ⑤ 期望集判据：22 + 插件/运行时件 ⇒ 不红；缺一件 ⇒ 红；混旧体系件 ⇒ 红
-    f_ok = catalog_judge(EXPECT22 + ["remotion-create", "diagnose-windows-sandbox-acl",
+    # ⑤ 期望集判据：21 + 插件/运行时件 ⇒ 不红；缺一件 ⇒ 红；混旧体系件 ⇒ 红
+    f_ok = catalog_judge(EXPECT + ["remotion-create", "diagnose-windows-sandbox-acl",
                                      "p0-probe-runtime"])[0]
-    f_miss = catalog_judge([x for x in EXPECT22 if x != "w-wish"])[0]
-    f_leak = catalog_judge(EXPECT22 + ["brain-daemon"])[0]
+    f_miss = catalog_judge([x for x in EXPECT if x != "w-wish"])[0]
+    f_leak = catalog_judge(EXPECT + ["brain-daemon"])[0]
     bad += chk((not f_ok) and bool(f_miss) and bool(f_leak),
                "⑤ 期望集判据：插件件不红、缺件/旧件必红（%d/%d/%d）"
                % (len(f_ok), len(f_miss), len(f_leak)))
 
     # ⑥ 旧件全集来自**目录扫**（不写死）：数量够 + 任意旧件名混入必红
     legacy = legacy_names(PROJECT if os.path.isdir(PROJECT) else None)
-    f_l1 = catalog_judge(EXPECT22 + ["autonomous-flywheel"], legacy=legacy)[0]
-    f_l2 = catalog_judge(EXPECT22 + ["class-brain-coordinator"], legacy=legacy)[0]
+    f_l1 = catalog_judge(EXPECT + ["autonomous-flywheel"], legacy=legacy)[0]
+    f_l2 = catalog_judge(EXPECT + ["class-brain-coordinator"], legacy=legacy)[0]
     bad += chk(len(legacy) >= 20 and bool(f_l1) and bool(f_l2),
                "⑥ 旧件全集按目录扫（%d 名）· 复核漏判的两名混入必红（%d/%d）"
                % (len(legacy), len(f_l1), len(f_l2)))
 
-    # ⑦ 取块按**来源**：真块只 8 件 + 其后 tool/result 回显 22 件 ⇒ 必须取 8 件（v1.1 会取 22 = 假绿）
+    # ⑦ 取块按**来源**：真块只 8 件 + 其后 tool/result 回显 21 件 ⇒ 必须取 8 件（v1.1 会取 21 = 假绿）
     def ev(t, names):
         return json.dumps({"type": t, "data": {
             "text": "<available_skills>\\n" + "\\n".join("- `%s`: desc" % n for n in names)
                     + "\\n</available_skills>"}}, ensure_ascii=False)
-    small = sorted(EXPECT22)[:8]
-    got = parse_catalog(ev("user/message", small) + "\n" + ev("tool/result", EXPECT22))
-    bad += chk(got == small, "⑦ 取块按来源：工具回显 22 件不得冒充真块（实得 %d 件）"
+    small = sorted(EXPECT)[:8]
+    got = parse_catalog(ev("user/message", small) + "\n" + ev("tool/result", EXPECT))
+    bad += chk(got == small, "⑦ 取块按来源：工具回显 21 件不得冒充真块（实得 %d 件）"
                % (len(got) if got else 0))
 
     print("  " + ("✅ 自证 9 检通过" if bad == 0 else "🔴 自证未过（%d 处）" % bad))
@@ -560,9 +574,10 @@ def selftest():
 def render(fails, warns, rows, l1_on):
     lines = ["# WishOS + v12-core · 验证报告", "",
              "- 时间：%s" % __import__("datetime").datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-             "- 件：`%s`（只读聚合；L0=%s）" % (__file__, "L0+L1" if l1_on else "L0"),
-             "- 判据来源：`_wishos_gate.py` E1~E7 · `_v12core_accept.py` A~F · 2026-11-02 耦合口径 ·"
-             " L1 v1.2（预设锚=事件优先 · 期望集=⊇22 且无旧件 · 取块=来源锚定 · 旧件全集=扫目录）",
+             "- 件：`E:\\DSH\\wishos\\tools\\_wishos_verify.py`（只读聚合；L0=%s）"
+             % ("L0+L1" if l1_on else "L0"),
+             "- 判据来源：`_wishos_gate.py` E1~E7 · `_v12core_accept.py` A~F · **`_v12core_sync.py` 6 件构建产物漂移** · 2026-11-02 耦合口径 ·"
+             " L1 v1.2（预设锚=事件优先 · 期望集=⊇21 且无旧件 · 取块=来源锚定 · 旧件全集=扫目录）· L2（--l2 时）",
              "", "## 判定", "", "**%s**（失败 %d / 警告 %d）"
              % ("✅ 全过" if not fails else "🔴 未全过", len(fails), len(warns)), "",
              "| 层 | 读数 |", "|:--|:--|"]
@@ -594,6 +609,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--session", default=None)
     ap.add_argument("--auto", action="store_true")
+    ap.add_argument("--l2", action="store_true", help="L0 + L2 单技能冒烟（并入口径）")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--out", default=REPORT)
     ap.add_argument("--update-baseline", action="store_true")
@@ -606,7 +622,7 @@ def main():
         write_baseline()
         return 0
 
-    fails, warns, rows = check_l0()
+    fails, warns, rows = check_l0(a.l2)
     l1_on = bool(a.session or a.auto)
     if l1_on:
         f2, w2, r2 = check_l1(a.session)

@@ -18,7 +18,7 @@
 
 | 项 | 值 | 实测状态 |
 |:--|:--|:--|
-| **包版本** | **wishos-core 0.3.3** | ✅ 已发布（[repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)） |
+| **包版本** | **wishos-core 0.3.4** | ✅ 已发布（[repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)） |
 | **协议版本** | **WishOS Protocol v0.1**（[PROTOCOL.md](PROTOCOL.md)） | 规范性文件 |
 | **DSH 宿主** | `>=0.2.1-rc.2 <0.2.2-0 \|\| >=0.2.2-rc.1 <0.3.0-0`（`engines.dsh`） | ✅ 实测 **dsh 0.2.1-rc.2**（Windows）；其余版本 ⚠️ 未实测 |
 | Node.js | `>=22.19.0` | 承宿主要求 |

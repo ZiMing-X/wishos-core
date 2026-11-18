@@ -27,7 +27,10 @@
         "card",
         "ticket",
         "artifact",
-        "session"
+        "session",
+        "plan",
+        "decision",
+        "schedule"
       ]
     },
     "title": {

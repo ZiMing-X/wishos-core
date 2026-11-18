@@ -549,7 +549,14 @@ def main():
     if fails:
         md += ["", "## 失败项", ""] + ["- 🔴 [%s] %s" % (k, v) for k, v in fails]
     text = "\n".join(md) + "\n"
-    out = a.out or os.path.join(a.root, "_tmp", "l3-report-%s.md" % re.sub(r"[^\w.-]", "_", run_id))
+    if a.out:
+        out = a.out
+    else:
+        _base = os.path.join(a.root, "_tmp", "l3-report-%s" % re.sub(r"[^\w.-]", "_", run_id))
+        out, _n = _base + ".md", 1
+        while os.path.exists(out):      # T3：不覆写，保留每次跑次读数（首跑可审计）
+            _n += 1
+            out = "%s-r%d.md" % (_base, _n)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         f.write(text)
