@@ -90,6 +90,93 @@
         }
       },
       "additionalProperties": true
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "description": "节点状态（非版本字段，不换 bcode）。取值语义由 gate 校验：active|demoted|historical|retired 及既有 plan 状态。"
+    },
+    "alias": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "demoted": {
+      "type": "object",
+      "required": [
+        "from_type",
+        "from_role",
+        "at",
+        "reason",
+        "decision_id"
+      ],
+      "properties": {
+        "from_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valid_from": {
+          "type": "string"
+        },
+        "valid_until": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "domain": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "default_entry": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
     }
   },
   "additionalProperties": true
