@@ -109,7 +109,7 @@ python tools/_wishos_cost_report.py --days 7                  # 成本读数（�
 | `tools/_wishos_cost_report.py` | 只读 `~/.dsh/sessions` usage，按日/会话汇总 tokens·调用·缓存·重试；带 `--selfcheck` |
 
 > **env**：`DSH_HOME`（默认 `~/.dsh`）· `DSH_PROFILE`（默认 `web`）· `WISHOS_ROOT`（默认 `$PWD/wishos`）。
-> `tools/dev/` 是**作者完整环境**（22 技能 / v12-core / 台账 / 巡检）的判据，环境不全时会假红，**不要**当公共自检。
+> `tools/dev/` 是**作者完整环境**（21 技能 = 8 `w-*` + 13 v12-core / 台账 / 巡检）的判据，环境不全时会假红，**不要**当公共自检。
 
 ## 平台与依赖
 
