@@ -8,7 +8,7 @@
 |:--|:--|:--|
 | `_wishos_gate.py` | profile 里的 `preset-wishos` 补丁行、v12 预设 42 件、约束台账（`WISHOS_LEDGER` 或 `$WISHOS_PROJECT/docs/…`）、`_beacon.py` 解码器 | 骨架门禁 E1~E8 + E10（13 项自证） |
 | `_wishos_verify.py` | 21 件可加载技能、v12-core 目录、profile 补丁双技能根、真实会话转录 | L0 磁盘 + L1 会话面验证 |
-| `_wishos_l2_smoke.py` | v12-core 14 件（默认范围；**旧代口径**，未随 T5/T6 对齐 ⇒ 现盘（13 件）必然红，属已知） | L2 技能冒烟 |
+| `_wishos_l2_smoke.py` | v12-core **13 件**（2026-11-21 0.3.6 收尾：整版取工作树 V13 + 4 处 env 参数化；`--all`/真跑 rc=0） | L2 技能冒烟 |
 | `_wishos_l3_e2e.py` | `outputs/check-*.md`、`outputs/closure-*.md`、brain 票据/卡片/节点 | L3 端到端判据 |
 
 **路径环境变量**（与公共工具一致，便于在作者机上跑）：

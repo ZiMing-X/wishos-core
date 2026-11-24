@@ -19,7 +19,7 @@
 
 | Item | Value | Status |
 |:--|:--|:--|
-| Package | **wishos-core 0.3.4** | ✅ published ([repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)) |
+| Package | **wishos-core 0.3.6** | ✅ published ([repo](https://github.com/ZiMing-X/wishos-core) · [release](https://github.com/ZiMing-X/wishos-core/releases)) |
 | Protocol | **WishOS Protocol v0.1** ([PROTOCOL.md](PROTOCOL.md)) | normative |
 | Host | `engines.dsh`: `>=0.2.1-rc.2 <0.2.2-0 \|\| >=0.2.2-rc.1 <0.3.0-0` | ✅ tested on **dsh 0.2.1-rc.2** (Windows); others untested |
 | Node.js | `>=22.19.0` | host requirement |

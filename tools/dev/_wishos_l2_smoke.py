@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
 """WishOS L2 单技能冒烟（只读 · 2026-11-02 v1.0）
 
-验什么（对应验证矩阵 §三 L2 清单，14 件）：
+🔧 2026-11-10 P2a：本入口已**并入** `_wishos_verify.py --l2`（总闸消费）；
+    本脚本保留**兼容直跑**（旧文档/旧记录仍可用），不再作为独立门禁入口。
+
+验什么（对应验证矩阵 §三 L2 清单，13 件）：
   ① frontmatter 可解析、`name` == 目录名、description 非空、whenToUse 存在（缺则 🔶）
   ② 正文非空（≥500 字符），且**带触发词**（正文/描述里能抽到「触发词：…」清单）
-  ③ 宿主耦合文本：`.workbuddy` / `WorkBuddy` / `<legacy-root>` 出现行（已知保留行除外）
+  ③ 宿主耦合文本：`.workbuddy` / `WorkBuddy` / `<legacy-root>`（`WISHOS_EXTRA_COUPLING_RE` 可配）出现行（已知保留行除外）
   ④ 有脚本的件：入口能起、不 import 失败（判定口径沿用矩阵：入口能起 + 无 Traceback/ImportError）
   ⑤ 触发词**近邻碰撞**：跨件出现完全相同的触发词 ⇒ 报「抢触发」风险对（只报告，不判红）
 
 用法：
-  python _wishos_l2_smoke.py              # 14 件 v12-core（L2 口径）
-  python _wishos_l2_smoke.py --all        # 14 + 8 件 w-*
+  python _wishos_l2_smoke.py              # 13 件 v12-core（L2 口径）
+  python _wishos_l2_smoke.py --all        # 13 + 8 件 w-*
   python _wishos_l2_smoke.py --json       # 机器可读
 
 退出码：0 全过 / 2 有失败
@@ -29,13 +32,14 @@ DSH_HOME = os.environ.get("DSH_HOME") or os.path.join(HOME, ".dsh")
 PRESET = os.path.join(DSH_HOME, ".agent-presets", "wishos")
 CORE = os.path.join(PRESET, "v12-core", "skills")
 WISH = os.path.join(PRESET, "skills")
-WORK = os.environ.get("WISHOS_ROOT") or os.path.join(os.getcwd(), "wishos")
+WORK = os.environ.get("WISHOS_ROOT") or os.path.join(
+    os.environ.get("WISHOS_PROJECT") or os.getcwd(), "wishos")
 REPORT = os.path.join(WORK, "_tmp", "l2-smoke-report.md")
 
-V14 = ["attention-failure-guard", "criteria-design-standard",
+V13 = ["attention-failure-guard", "criteria-design-standard",
        "declared-value-drift-guard", "doc-plan-protocol", "four-rules-v3",
        "info-analyst", "introspect-guard", "memory-efficiency", "plan",
-       "plan-auditor", "plan-executor", "plan-template", "session-guard",
+       "plan-executor", "plan-template", "session-guard",
        "shutdown-protocol"]
 W8 = ["w-calibrate", "w-capture", "w-enter", "w-evolve",
       "w-recall", "w-router", "w-watchdog", "w-wish"]
@@ -138,7 +142,7 @@ def main():
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
 
-    plan = [(n, CORE) for n in V14] + ([(n, WISH) for n in W8] if a.all else [])
+    plan = [(n, CORE) for n in V13] + ([(n, WISH) for n in W8] if a.all else [])
     fails, warns, rows = [], [], []
     trig, no_when, no_trig = {}, [], []
     for name, root in plan:
@@ -202,7 +206,7 @@ def main():
 
     lines = ["# WishOS L2 单技能冒烟报告", "",
              "- 时间：%s" % __import__("datetime").datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-             "- 范围：%d 件（%s）" % (len(plan), "14 v12-core + 8 w-*" if a.all else "14 v12-core"),
+             "- 范围：%d 件（%s）" % (len(plan), "13 v12-core + 8 w-*" if a.all else "13 v12-core"),
              "- 判定：**%s**（失败 %d / 警告 %d）" % ("✅ 全过" if not fails else "🔴 未全过",
                                                    len(fails), len(warns)),
              "", "| 类 | 读数 |", "|:--|:--|"]
