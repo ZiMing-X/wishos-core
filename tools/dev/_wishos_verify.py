@@ -58,7 +58,8 @@ HOME = os.path.expanduser("~")
 DSH = os.path.join(HOME, ".dsh")
 WISH_ROOT = os.path.join(DSH, ".agent-presets", "wishos")
 WISH_SKILLS = os.path.join(WISH_ROOT, "skills")
-CORE_SKILLS = os.path.join(WISH_ROOT, "v12-core", "skills")
+PKG_SKILLS = os.path.join(DSH, "profiles", "web", "node_modules", "v12-core", "skills")
+EXTRAS_SKILLS = os.path.join(WISH_ROOT, "v12-extras", "skills")
 V12_SKILLS = os.path.join(DSH, ".agent-presets", "v12", "skills")
 PATCH = os.path.join(DSH, "profiles", "web", "cordis.patch.yml")
 SESSIONS = os.path.join(DSH, "sessions")
@@ -76,13 +77,21 @@ V13 = ["attention-failure-guard", "criteria-design-standard",
        "info-analyst", "introspect-guard", "memory-efficiency", "plan",
        "plan-executor", "plan-template", "session-guard",
        "shutdown-protocol"]
-EXPECT = sorted(W8 + V13)
+# 2026-11-24 fusion B：核心 18 = v12-core 包 10 + 第二根独有 8（重叠 5 用包版）
+V10 = ["class-brain-coordinator", "enforce-validation-protocol", "four-rules-v3",
+       "knowledge-capture", "knowledge-compliance", "knowledge-retrieve",
+       "memory-efficiency", "plan-template", "session-guard", "shutdown-protocol"]
+V18 = sorted(set(V10) | set(V13))  # 18
+EXPECT = sorted(W8 + V18)
 KNOWN_V12_ONLY = ["v12-router", "intel-analyst", "brain-daemon",
                   "knowledge-retrieve", "knowledge-capture", "shutdown_protocol"]
 CATALOG_CHAR_BUDGET = 12000
-KNOWN_RESIDUAL_LINES = {  # 2026-11-02 W1-c 裁定保留的 2 处耦合指标残留
+KNOWN_RESIDUAL_LINES = {  # 2026-11-02 W1-c 裁定保留的耦合指标残留
     # 🔧 2026-11-10 V2b 回流：four-rules-v3 v3.13→v3.19 正文 + 退役注 3 行 ⇒ 行号 832/1190 → 835/1193（实测重定位）
     "four-rules-v3": [835, 1193],
+    # 🔧 2026-11-24 fusion B：v12-core 包 knowledge-retrieve 正文的 3 处「声明/历史」行
+    #    L21 {{PROJECT_ROOT}} 绝对路径（T3 豁免声明）· L115 DSH 域内副本 + 正本只读说明 · L116 旧 WB 硬编码历史（已修）
+    "knowledge-retrieve": [21, 115, 116],
 }
 COUPLING_PATS = [
     ("P1", re.compile(r"[A-Za-z]:\\Users\\64908\\\.workbuddy", re.I)),
@@ -107,7 +116,7 @@ def read(path):
 def skill_files():
     """返回 [(root_tag, dir_name, SKILL.md path)]，与 dsh-skill-filesystem 发现同口径。"""
     out = []
-    for tag, root in (("w", WISH_SKILLS), ("c", CORE_SKILLS)):
+    for tag, root in (("w", WISH_SKILLS), ("c", PKG_SKILLS), ("x", EXTRAS_SKILLS)):
         if not os.path.isdir(root):
             continue
         for d in sorted(os.listdir(root)):
@@ -134,6 +143,27 @@ def frontmatter_len(text):
         return 0, {}
     n = sum(len(str(fm.get(k, ""))) for k in ("name", "description", "whenToUse"))
     return n, fm
+
+
+def dormant_names():
+    """宿主口径「模型不可见」件（= frontmatter `disable-model-invocation: true`）。
+
+    🔴 2026-11-25 回读宿主源码立的锚（铁律②③：判据必须能指到源码行）：
+      `@deepseek-ai/dsh-skill-filesystem/lib/index.js:863-871`
+        `frontmatterBoolean(data, "disable-model-invocation") === true ⇒ modelInvocable = false`
+      ⇒ 该技能**不进**模型侧 `<available_skills>` 目录；`user-invocable` 仍为真（可按名调用）。
+
+    本预设 26 件里有 2 件命中（`enforce-validation-protocol` / `knowledge-compliance`：
+    `lifecycle: dormant` · `dormant_since: 2026-07-21`，旧 v12 根同款）
+    ⇒ **模型可见面恒为 24**。L1 判据若仍按 26 件要求，就是**恒红**，
+      而恒红等于没有判据（2026-11-25 上午「734 次红被当噪声」同形）。
+    """
+    out = set()
+    for _tag, d, p in skill_files():
+        _n, fm = frontmatter_len(read(p))
+        if fm.get("disable-model-invocation") is True:
+            out.add(d)
+    return out
 
 
 def run_py(script, timeout=180):
@@ -177,16 +207,19 @@ def check_l0(include_l2=False):
             else:
                 warns.append(("L2", "L2 冒烟通过（含预存警告，详见独立报告）"))
 
-    # 3) 技能目录: 21 = 8 + 13
+    # 3) 技能目录: 26 = 8 + 18（包10 + extras8）
     files = skill_files()
-    tags = {"w": [d for t, d, _ in files if t == "w"], "c": [d for t, d, _ in files if t == "c"]}
+    tags = {"w": [d for t, d, _ in files if t == "w"],
+            "c": [d for t, d, _ in files if t == "c"],
+            "x": [d for t, d, _ in files if t == "x"]}
     if sorted(tags["w"]) != sorted(W8):
         fails.append(("E", "w-* 目录不符: %r" % sorted(tags["w"])))
-    if sorted(tags["c"]) != sorted(V13):
-        fails.append(("E", "v12-core 不符: %r" % sorted(tags["c"])))
-    if len(files) != 21:
-        fails.append(("E", "可加载技能数=%d（应 21）" % len(files)))
-    rows.append(("E", "可加载技能 = %d（8 + 13）" % len(files)))
+    core = sorted(tags["c"] + tags["x"])
+    if core != sorted(V18):
+        fails.append(("E", "核心技能不符: %r" % core))
+    if len(files) != 26:
+        fails.append(("E", "可加载技能数=%d（应 26）" % len(files)))
+    rows.append(("E", "可加载技能 = %d（8 + 18）" % len(files)))
 
     # 3) 目录成本（每轮注入成本）
     total = 0
@@ -195,7 +228,7 @@ def check_l0(include_l2=False):
         n, fm = frontmatter_len(read(p))
         total += n
         per.append((d, n, len(str(fm.get("description", "")))))
-    rows.append(("COST", "21 件目录 ≈%d 字符 ≈%d tok/轮（预算 %d）"
+    rows.append(("COST", "26 件目录 ≈%d 字符 ≈%d tok/轮（预算 %d）"
                  % (total, total // 2, CATALOG_CHAR_BUDGET)))
     if total > CATALOG_CHAR_BUDGET:
         fails.append(("COST", "目录成本 %d 字符 > 预算 %d（先看 description 最长的件）"
@@ -211,10 +244,10 @@ def check_l0(include_l2=False):
                 if pat.search(line):
                     hits.append((d, i, t))
     known = sum(1 for d, i, _ in hits if i in KNOWN_RESIDUAL_LINES.get(d, []))
-    if len(hits) != 2 or known != 2:
-        fails.append(("PATHS", "耦合命中 %d 处（应恰 2 处已知保留行）: %r"
+    if len(hits) != 5 or known != 5:
+        fails.append(("PATHS", "耦合命中 %d 处（应恰 5 处已知保留行）: %r"
                       % (len(hits), [(d, i) for d, i, _ in hits[:8]])))
-    rows.append(("PATHS", "WorkBuddy/正本耦合 = %d 处（余 2 处为 L835 声明 + L1193 历史行）" % len(hits)))
+    rows.append(("PATHS", "WorkBuddy/正本耦合 = %d 处（5 处均为已知声明/历史行）" % len(hits)))
 
     # 5) 预设与旧体系未动
     n12 = len([d for d in os.listdir(V12_SKILLS) if os.path.isdir(os.path.join(V12_SKILLS, d))]) \
@@ -226,9 +259,9 @@ def check_l0(include_l2=False):
     if "v12-package-20261102" in ptxt:
         fails.append(("126", "patch 出现 126 解包副本路径"))
     rows.append(("126", "patch 无 126 全量路径"))
-    if ("v12-core\\skills" not in ptxt) or ("wishos\\skills" not in ptxt):
-        fails.append(("PATCH", "patch 未同时含两个技能根"))
-    rows.append(("PATCH", "双技能根在 patch 中（wishos\\skills + wishos\\v12-core\\skills）"))
+    if ("node_modules\\v12-core\\skills" not in ptxt) or ("v12-extras\\skills" not in ptxt) or ("wishos\\skills" not in ptxt):
+        fails.append(("PATCH", "patch 未同时含三技能根（wishos / v12-core 包 / v12-extras）"))
+    rows.append(("PATCH", "三技能根在 patch 中（wishos\\skills + node_modules\\v12-core\\skills + v12-extras\\skills）"))
 
     # 6) 基线漂移（仅报告；改了技能就需重新验收并 --update-baseline）
     drift = []
@@ -245,7 +278,7 @@ def check_l0(include_l2=False):
         if drift:
             warns.append(("BASE", "技能文件相对基线有改动（需重新验收并刷基线）: %r" % drift))
         else:
-            rows.append(("BASE", "21 件技能 md5 与基线一致（baseline: %s）" % os.path.basename(BASELINE)))
+            rows.append(("BASE", "26 件技能 md5 与基线一致（baseline: %s）" % os.path.basename(BASELINE)))
     else:
         warns.append(("BASE", "尚无基线（首次验收通过后跑 --update-baseline）"))
 
@@ -382,21 +415,34 @@ def legacy_names(cwd=None):
     return sorted(names - set(EXPECT))
 
 
-def catalog_judge(cat, legacy=None):
-    """L1 判据（可证伪）：preset 两根的 21 件**一件不缺** + **无旧体系件** ⇒ 通过。
+def catalog_judge(cat, legacy=None, dormant=None):
+    """L1 判据（可证伪）：preset **模型可见面**一件不缺 + dormant 声明件不得出现 + 无旧体系件。
 
-    为什么不是「恰好 21 相等」：运行时目录 = preset 两根 21 + 宿主插件注册件
-    （remotion-* / diagnose-windows-sandbox-acl）+ 运行时注册件（p0-probe-runtime），
-    后两类不受 `includeDefaultRoots:false` 管（该选项只作用于文件系统根）⇒ 等值必假红。
+    期望面 = 26 件技能 − dormant（宿主 `disable-model-invocation: true`，现 2 件）= **24**。
+    为什么不是「恰好等值」：运行时目录 = preset 三根 + 宿主插件注册件
+    （remotion-* / diagnose-windows-sandbox-acl）+ 非 preset 根件（plan-book）⇒ 等值必假红。
+    判别力三条（自证 ⑤⑧⑨ 各给负样本）：
+      ① 任一**非 dormant** 件缺席 ⇒ 红（挂载面掉根立刻可见）；
+      ② 任一 **dormant** 件出现在目录 ⇒ 红（声明被偷偷删掉/被覆盖，必须重新登记）；
+      ③ dormant 件在盘上消失 ⇒ 红（26 件集合自身被削弱）。
     返回 (fails, missing, leaked, extras)。
     """
     fails, got = [], set(cat)
     legacy = set(legacy) if legacy is not None else set(legacy_names())
-    missing = sorted(set(EXPECT) - got)
+    dormant = dormant_names() if dormant is None else set(dormant)
+    expect_model = sorted(set(EXPECT) - dormant)
+    missing = sorted(set(expect_model) - got)
+    resurfaced = sorted(dormant & got)
+    gone = sorted(dormant - {d for _t, d, _p in skill_files()})
     leaked = sorted(n for n in got if n in legacy)
     extras = sorted(got - set(EXPECT) - set(leaked))
     if missing:
-        fails.append(("L1", "preset 技能缺失 %d 件: %r" % (len(missing), missing[:10])))
+        fails.append(("L1", "preset 模型可见件缺失 %d 件: %r" % (len(missing), missing[:10])))
+    if resurfaced:
+        fails.append(("L1", "dormant 件出现在模型目录 %d 件: %r（disable-model-invocation 声明丢了？）"
+                      % (len(resurfaced), resurfaced[:10])))
+    if gone:
+        fails.append(("L1", "dormant 件在盘上消失 %d 件: %r（26 件集合被削弱）" % (len(gone), gone[:10])))
     if leaked:
         fails.append(("L1", "旧体系件泄漏 %d 件: %r" % (len(leaked), leaked[:10])))
     return fails, missing, leaked, extras
@@ -462,12 +508,16 @@ def check_l1_session(path, expect_preset="wishos"):
         return fails, warns, rows
     legacy = legacy_names(header.get("cwd"))
     jfails, missing, leaked, extras = catalog_judge(cat, legacy)
-    rows.append(("L1", "目录可见 %d 件 = preset %d（%d w-* + %d v12-core）+ 非 preset 根 %s"
-                 % (len(cat), len(set(cat) & set(EXPECT)), len(W8), len(V13), extras_brief(extras))))
+    dormant = dormant_names()
+    rows.append(("L1", "目录可见 %d 件 = preset 模型可见 %d/%d（26 − dormant %d）+ 非 preset 根 %s"
+                 % (len(cat), len(set(cat) & (set(EXPECT) - dormant)), len(EXPECT) - len(dormant),
+                    len(dormant), extras_brief(extras))))
+    rows.append(("L1", "dormant 声明（宿主 disable-model-invocation: true，不进模型目录）: %s"
+                 % (("、".join(sorted(dormant))) if dormant else "0 件")))
     fails += jfails
     if not jfails:
-        rows.append(("L1", "✅ preset 两根 21 件全在 · 旧体系 0 泄漏（旧件全集按目录扫，%d 名）"
-                     % len(legacy)))
+        rows.append(("L1", "✅ preset 模型可见面 %d 件全在 · dormant %d 件按声明缺席 · 旧体系 0 泄漏（旧件全集按目录扫，%d 名）"
+                     % (len(set(EXPECT) - dormant), len(dormant), len(legacy))))
     return fails, warns, rows
 
 
@@ -520,7 +570,7 @@ def selftest():
             + "\\n</available_skills>")
     tail = "读文档时引用了标记：<available_skills>\\n- `w-wish`: 示例\\n"   # 无闭合标签
     got = parse_catalog(real + "\n中间正文\n" + tail)
-    bad += chk(got == sorted(EXPECT), "① 取块：跳过引用、取真目录块（转义换行，21 件）")
+    bad += chk(got == sorted(EXPECT), "① 取块：跳过引用、取真目录块（转义换行，26 件）")
 
     # ② 耦合计数：3 条合成行 → 恰 3 命中
     sample = ("x ~/.workbuddy/y\nE:\\知识库相关\\z\nC:\\Users\\64908\\.workbuddy\\q\n")
@@ -528,7 +578,7 @@ def selftest():
     bad += chk(n == 3, "② 耦合计数（合成 3 处）实得 %d" % n)
 
     # ③ 期望集合：21 且无重名
-    bad += chk(len(set(EXPECT)) == 21, "③ 期望集合 21 件无重名")
+    bad += chk(len(set(EXPECT)) == 26, "③ 期望集合 26 件无重名")
 
     # ④ 预设锚：header=standard + 事件=wishos ⇒ 必须认成 wishos（来源 event）；无事件回退 header
     fake = ('{"type":"session","agentPreset":"standard"}\n'
@@ -539,21 +589,32 @@ def selftest():
     p2, s2 = session_preset(hdr, fake.splitlines()[0] + "\n")
     bad += chk(p2 == "standard" and s2 == "header", "④b 无事件时回退 header（%r/%s）" % (p2, s2))
 
-    # ⑤ 期望集判据：21 + 插件/运行时件 ⇒ 不红；缺一件 ⇒ 红；混旧体系件 ⇒ 红
-    f_ok = catalog_judge(EXPECT + ["remotion-create", "diagnose-windows-sandbox-acl",
-                                     "p0-probe-runtime"])[0]
-    f_miss = catalog_judge([x for x in EXPECT if x != "w-wish"])[0]
-    f_leak = catalog_judge(EXPECT + ["brain-daemon"])[0]
+    # ⑤ 期望集判据：模型可见面 + 插件/运行时件 ⇒ 不红；缺一件 ⇒ 红；混旧体系件 ⇒ 红
+    dorm = dormant_names()
+    notdorm = [x for x in EXPECT if x not in dorm]
+    f_ok = catalog_judge(notdorm + ["remotion-create", "diagnose-windows-sandbox-acl",
+                                    "p0-probe-runtime"], dormant=dorm)[0]
+    f_miss = catalog_judge([x for x in notdorm if x != "w-wish"], dormant=dorm)[0]
+    f_leak = catalog_judge(notdorm + ["brain-daemon"], dormant=dorm)[0]
     bad += chk((not f_ok) and bool(f_miss) and bool(f_leak),
                "⑤ 期望集判据：插件件不红、缺件/旧件必红（%d/%d/%d）"
                % (len(f_ok), len(f_miss), len(f_leak)))
 
+    # ⑧ dormant 判据三条（2026-11-25 改锚的判别力自证）
+    f_absent = catalog_judge(notdorm, dormant=dorm)[0]          # dormant 缺席 ⇒ 不红（否则恒红）
+    f_resurf = catalog_judge(notdorm + sorted(dorm), dormant=dorm)[0]   # dormant 出现 ⇒ 红
+    f_gone = catalog_judge(notdorm, dormant=set(dorm) | {"__not-on-disk__"})[0]  # 盘上消失 ⇒ 红
+    bad += chk((not f_absent) and bool(f_resurf) and bool(f_gone),
+               "⑧ dormant 判据：缺席不红 / 出现在目录必红 / 盘上消失必红（%d/%d/%d）"
+               % (len(f_absent), len(f_resurf), len(f_gone)))
+    bad += chk(len(dorm) == 2, "⑨ 实盘 dormant=2 件（%r）；数量变了 ⇒ 本判据要重新对账" % sorted(dorm))
+
     # ⑥ 旧件全集来自**目录扫**（不写死）：数量够 + 任意旧件名混入必红
     legacy = legacy_names(PROJECT if os.path.isdir(PROJECT) else None)
-    f_l1 = catalog_judge(EXPECT + ["autonomous-flywheel"], legacy=legacy)[0]
-    f_l2 = catalog_judge(EXPECT + ["class-brain-coordinator"], legacy=legacy)[0]
+    f_l1 = catalog_judge(EXPECT + ["autonomous-flywheel"], legacy=legacy, dormant=dorm)[0]
+    f_l2 = catalog_judge(EXPECT + ["brain-daemon"], legacy=legacy, dormant=dorm)[0]
     bad += chk(len(legacy) >= 20 and bool(f_l1) and bool(f_l2),
-               "⑥ 旧件全集按目录扫（%d 名）· 复核漏判的两名混入必红（%d/%d）"
+               "⑥ 旧件全集按目录扫（%d 名）· 非期望旧件混入必红（%d/%d）"
                % (len(legacy), len(f_l1), len(f_l2)))
 
     # ⑦ 取块按**来源**：真块只 8 件 + 其后 tool/result 回显 21 件 ⇒ 必须取 8 件（v1.1 会取 21 = 假绿）
@@ -566,7 +627,7 @@ def selftest():
     bad += chk(got == small, "⑦ 取块按来源：工具回显 21 件不得冒充真块（实得 %d 件）"
                % (len(got) if got else 0))
 
-    print("  " + ("✅ 自证 9 检通过" if bad == 0 else "🔴 自证未过（%d 处）" % bad))
+    print("  " + ("✅ 自证 10 检通过" if bad == 0 else "🔴 自证未过（%d 处）" % bad))
     return 0 if bad == 0 else 2
 
 
@@ -577,7 +638,8 @@ def render(fails, warns, rows, l1_on):
              "- 件：`E:\\DSH\\wishos\\tools\\_wishos_verify.py`（只读聚合；L0=%s）"
              % ("L0+L1" if l1_on else "L0"),
              "- 判据来源：`_wishos_gate.py` E1~E7 · `_v12core_accept.py` A~F · **`_v12core_sync.py` 6 件构建产物漂移** · 2026-11-02 耦合口径 ·"
-             " L1 v1.2（预设锚=事件优先 · 期望集=⊇21 且无旧件 · 取块=来源锚定 · 旧件全集=扫目录）· L2（--l2 时）",
+             " L1 v1.3（预设锚=事件优先 · 期望集=⊇24 模型可见（26 − dormant 2）且无旧件 ·"
+             " **dormant 件出现在目录必红** · 取块=来源锚定 · 旧件全集=扫目录）· L2（--l2 时）",
              "", "## 判定", "", "**%s**（失败 %d / 警告 %d）"
              % ("✅ 全过" if not fails else "🔴 未全过", len(fails), len(warns)), "",
              "| 层 | 读数 |", "|:--|:--|"]

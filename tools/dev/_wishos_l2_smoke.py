@@ -4,7 +4,7 @@
 🔧 2026-11-10 P2a：本入口已**并入** `_wishos_verify.py --l2`（总闸消费）；
     本脚本保留**兼容直跑**（旧文档/旧记录仍可用），不再作为独立门禁入口。
 
-验什么（对应验证矩阵 §三 L2 清单，13 件）：
+验什么（对应验证矩阵 §三 L2 清单，18 件）：
   ① frontmatter 可解析、`name` == 目录名、description 非空、whenToUse 存在（缺则 🔶）
   ② 正文非空（≥500 字符），且**带触发词**（正文/描述里能抽到「触发词：…」清单）
   ③ 宿主耦合文本：`.workbuddy` / `WorkBuddy` / `<legacy-root>`（`WISHOS_EXTRA_COUPLING_RE` 可配）出现行（已知保留行除外）
@@ -12,8 +12,8 @@
   ⑤ 触发词**近邻碰撞**：跨件出现完全相同的触发词 ⇒ 报「抢触发」风险对（只报告，不判红）
 
 用法：
-  python _wishos_l2_smoke.py              # 13 件 v12-core（L2 口径）
-  python _wishos_l2_smoke.py --all        # 13 + 8 件 w-*
+  python _wishos_l2_smoke.py              # 18 件核心（L2 口径）
+  python _wishos_l2_smoke.py --all        # 18 + 8 件 w-*
   python _wishos_l2_smoke.py --json       # 机器可读
 
 退出码：0 全过 / 2 有失败
@@ -30,7 +30,9 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 HOME = os.path.expanduser("~")
 DSH_HOME = os.environ.get("DSH_HOME") or os.path.join(HOME, ".dsh")
 PRESET = os.path.join(DSH_HOME, ".agent-presets", "wishos")
-CORE = os.path.join(PRESET, "v12-core", "skills")
+DSH = os.environ.get("DSH_HOME") or os.path.join(HOME, ".dsh")
+PKG = os.path.join(DSH, "profiles", "web", "node_modules", "v12-core", "skills")
+EXTRAS = os.path.join(PRESET, "v12-extras", "skills")
 WISH = os.path.join(PRESET, "skills")
 WORK = os.environ.get("WISHOS_ROOT") or os.path.join(
     os.environ.get("WISHOS_PROJECT") or os.getcwd(), "wishos")
@@ -41,6 +43,12 @@ V13 = ["attention-failure-guard", "criteria-design-standard",
        "info-analyst", "introspect-guard", "memory-efficiency", "plan",
        "plan-executor", "plan-template", "session-guard",
        "shutdown-protocol"]
+# 2026-11-24 fusion B：包 10 + 第二根独有 8 = 18
+V10 = ["class-brain-coordinator", "enforce-validation-protocol", "four-rules-v3",
+       "knowledge-capture", "knowledge-compliance", "knowledge-retrieve",
+       "memory-efficiency", "plan-template", "session-guard", "shutdown-protocol"]
+V18 = sorted(set(V10) | set(V13))
+EXTRAS_LIST = [n for n in V13 if n not in set(V10)]
 W8 = ["w-calibrate", "w-capture", "w-enter", "w-evolve",
       "w-recall", "w-router", "w-watchdog", "w-wish"]
 # 按设计就没有触发词的件（不是缺陷，别当红灯报）
@@ -51,7 +59,7 @@ NO_TRIGGER_BY_DESIGN = {
 # 按矩阵 §三：依赖外部模型 key 的脚本不跑（只登记）
 SKIP_SCRIPTS = {"four-rules-v3": "依赖外部模型 key（GLM / OpenCode），矩阵 §三 明确不跑"}
 # 已知保留的耦合行（2026-11-02 W1-c 裁定：L832 声明 + L1190 历史行）
-KNOWN_COUPLING = {"four-rules-v3": 2}
+KNOWN_COUPLING = {"four-rules-v3": 2, "knowledge-retrieve": 3}  # 2026-11-24 fusion B
 COUPLING_PATS = [re.compile(r"[A-Za-z]:\\Users\\[^\\]+\\.workbuddy", re.I),
                  re.compile(os.environ.get("WISHOS_EXTRA_COUPLING_RE") or r"zzz_no_match_zzz"),
                  re.compile(r"~[/\\]\.workbuddy", re.I)]
@@ -142,7 +150,7 @@ def main():
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
 
-    plan = [(n, CORE) for n in V13] + ([(n, WISH) for n in W8] if a.all else [])
+    plan = [(n, PKG) for n in V10] + [(n, EXTRAS) for n in EXTRAS_LIST] + ([(n, WISH) for n in W8] if a.all else [])
     fails, warns, rows = [], [], []
     trig, no_when, no_trig = {}, [], []
     for name, root in plan:
@@ -206,7 +214,7 @@ def main():
 
     lines = ["# WishOS L2 单技能冒烟报告", "",
              "- 时间：%s" % __import__("datetime").datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-             "- 范围：%d 件（%s）" % (len(plan), "13 v12-core + 8 w-*" if a.all else "13 v12-core"),
+             "- 范围：%d 件（%s）" % (len(plan), "18 core(10+8) + 8 w-*" if a.all else "18 core(10+8)"),
              "- 判定：**%s**（失败 %d / 警告 %d）" % ("✅ 全过" if not fails else "🔴 未全过",
                                                    len(fails), len(warns)),
              "", "| 类 | 读数 |", "|:--|:--|"]
